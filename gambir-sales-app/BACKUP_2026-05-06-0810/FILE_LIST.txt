@@ -1,0 +1,14 @@
+total 644
+drwxr-xr-x  2 root root   4096 May  6 08:10 .
+drwxr-xr-x 11 root root   4096 May  6 08:10 ..
+-rw-r--r--  1 root root  19052 May  6 08:10 app.js
+-rw-r--r--  1 root root   2154 May  6 08:10 clusters.js
+-rw-r--r--  1 root root      0 May  6 08:10 FILE_LIST.txt
+-rw-r--r--  1 root root 540672 May  6 08:10 gambir_sales.db
+-rw-r--r--  1 root root   6025 May  6 08:10 index.html
+-rw-r--r--  1 root root  29959 May  6 08:10 index.js
+-rw-r--r--  1 root root    688 May  6 08:10 package.json
+-rw-r--r--  1 root root    462 May  6 08:10 server.log
+-rw-r--r--  1 root root   5745 May  6 08:10 sheets.js
+-rw-r--r--  1 root root  17959 May  6 08:10 style.css
+-rw-r--r--  1 root root   7968 May  6 08:10 visit.html

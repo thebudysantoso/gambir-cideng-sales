@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a73e8">
+<title>Gambir-Cideng Command Center</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="top-bar">
+  <h1>Gambir-Cideng Command</h1>
+  <div class="top-actions">
+    <button class="btn-icon" onclick="refreshData()">🔄</button>
+  </div>
+</div>
+
+<!-- Tab Bar -->
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="dashboard" onclick="showTab('dashboard')">Dashboard</button>
+  <button class="tab-btn" data-tab="leads" onclick="showTab('leads')">Leads</button>
+  <button class="tab-btn" data-tab="map" onclick="showTab('map')">Map</button>
+  <!-- Queue hidden temporarily -->
+</div>
+
+<!-- Main Content -->
+<main>
+
+  <!-- Dashboard Tab -->
+  <section id="dashboard" class="tab-content active">
+    <div style="text-align:center;padding:8px 0;font-size:14px;color:#5f6368"
+>Total Leads: <strong id="statTotal">0</strong></div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-num" id="statVisited">0</div>
+        <div class="stat-label">Sudah Dikunjungi</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="statNotVisited">0</div>
+        <div class="stat-label">Belum Dihubungi</div>
+      </div>
+      <div class="stat-card hot">
+        <div class="stat-num" id="statWAAvailable">0</div>
+        <div class="stat-label">WA Tersedia</div>
+      </div>
+      <div class="stat-card warm">
+        <div class="stat-num" id="statWASent">0</div>
+        <div class="stat-label">WA Terkirim</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="statNeedActions">0</div>
+        <div class="stat-label">Butuh Tindakan</div>
+      </div>
+      <div class="stat-card" style="--primary:#34a853">
+        <div class="stat-num" id="statSuccess">0</div>
+        <div class="stat-label">Sukses/Deal</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Leads Tab -->
+  <section id="leads" class="tab-content">
+    <div class="search-panel">
+      <input type="text" id="searchInput" placeholder="Cari nama bisnis..." oninput="filterLeads()">
+      <select id="clusterFilter" onchange="filterLeads()">
+        <option value="all">Semua Cluster</option>
+      </select>
+      <select id="segmentFilter" onchange="filterLeads()">
+        <option value="all">Semua Segmen</option>
+      </select>
+      <select id="statusFilter" onchange="filterLeads()">
+        <option value="all">Semua Status</option>
+        <option value="HOT">HOT</option>
+        <option value="WARM">WARM</option>
+        <option value="COLD">COLD</option>
+      </select>
+      <button class="btn-secondary" onclick="clearFilters()">Reset</button>
+    </div>
+    <div id="leadsList" class="lead-list"></div>
+    <div class="pagination">
+      <button id="prevPage" onclick="goPage(page-1)">← Sebelumnya</button>
+      <span id="pageInfo">Halaman 1</span>
+      <button id="nextPage" onclick="goPage(page+1)">Selanjutnya →</button>
+    </div>
+  </section>
+
+  <!-- Map Tab -->
+  <section id="map" class="tab-content">
+    <div id="mapContainer" class="map-container"></div>
+    <div class="map-legend">
+      <span><span class="legend-dot not-visited"></span> Belum</span>
+      <span><span class="legend-dot visited"></span> Dikunjungi</span>
+      <span><span class="legend-dot wa-available"></span> Bisa WA</span>
+      <span><span class="legend-dot need-actions"></span> Butuh Tindakan</span>
+      <span><span class="legend-dot hot"></span> HOT</span>
+      <span><span class="legend-dot warm"></span> WARM</span>
+      <span><span class="legend-dot drop"></span> Drop</span>
+    </div>
+  </section>
+
+  <!-- Queue Tab (hidden) -->
+  <section id="queue" class="tab-content">
+    <div class="queue-header">
+      <h2>📋 Sales Action Queue</h2>
+      <button class="btn-secondary" onclick="loadQueue()">🔄 Refresh</button>
+    </div>
+    <div id="queueList" class="lead-list"></div>
+  </section>
+
+</main>
+
+<!-- Lead Detail Modal -->
+<div id="leadModal" class="modal hidden">
+  <div class="modal-overlay" onclick="closeModal()"></div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="modalTitle">Detail Lead</h2>
+      <button class="btn-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="generateWA()">📱 WhatsApp</button>
+      <button class="btn-secondary" onclick="openVisit()">📝 Kunjungan</button>
+      <button class="btn-secondary" onclick="openMaps()">🗺️ Maps</button>
+    </div>
+  </div>
+</div>
+
+<!-- WhatsApp Modal -->
+<div id="waModal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>📱 Pesan WhatsApp</h2>
+      <button class="btn-close" onclick="closeWAModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <label>Template:</label>
+      <select id="waTemplate" onchange="updateWAMessage()">
+        <option value="observer">The Observer - Kontak Pertama (Paling Aman)</option>
+        <option value="insider">The Insider - Promo & Scarcity</option>
+        <option value="problem_solver">The Problem Solver - Fokus Masalah</option>
+        <option value="social_proof">The Social Proof - Referensi Tetangga</option>
+        <option value="minimalist">The Minimalist - Singkat & Brief</option>
+        <option value="fnb">F&B Specific - Resto/Cafe/Warung</option>
+        <option value="kantor">Kantor/Professional - Office</option>
+        <option value="migration">Migration - Sudah Punya Internet</option>
+      </select>
+      <textarea id="waMessage" rows="8"></textarea>
+      <div class="wa-actions">
+        <button class="btn-primary" onclick="copyWA()">📋 Salin</button>
+        <a id="waLink" class="btn-primary" target="_blank">📱 Buka WA</a>
+        <button class="btn-secondary" onclick="markWASent()">✅ Tandai Terkirim</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').then(reg => {
+    reg.update();
+  }).catch(() => {});
+}
+</script>
+</body>
+</html>
