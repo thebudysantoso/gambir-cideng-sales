@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Kunjungan Lapangan — Gambir-Cideng</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.visit-form{max-width:600px;margin:0 auto;padding:16px;}
+.visit-form h2{font-size:18px;margin-bottom:16px;}
+.form-group{margin-bottom:16px;}
+.form-group label{display:block;font-size:13px;color:#5f6368;margin-bottom:6px;font-weight:500;}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:12px;border:1px solid #dadce0;border-radius:10px;font-size:15px;background:#fff;}
+.form-group textarea{min-height:80px;resize:vertical;}
+.form-group input[type="file"]{padding:8px;}
+.gps-display{font-size:12px;color:#1a73e8;margin-top:4px;}
+.submit-btn{width:100%;padding:16px;background:#1a73e8;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;margin-top:20px;}
+.submit-btn:disabled{background:#dadce0;}
+.status-msg{text-align:center;padding:20px;font-size:16px;}
+.status-success{color:#34a853;}
+.status-error{color:#ea4335;}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <h1>📝 Kunjungan Lapangan</h1>
+  <button class="btn-icon" onclick="window.close()">✕</button>
+</div>
+
+<div class="visit-form" id="visitForm">
+  <h2 id="leadName">Memuat...</h2>
+  
+  <div class="form-group">
+    <label>Nama Petugas</label>
+    <input type="text" id="agentName" placeholder="Nama Anda">
+  </div>
+  
+  <div class="form-group">
+    <label>Hasil Kunjungan *</label>
+    <select id="outcome" required>
+      <option value="">Pilih hasil</option>
+      <option value="interested">Berminat — Minta Proposal</option>
+      <option value="not_interested">Tidak Berminat</option>
+      <option value="has_internet">Sudah Punya Internet</option>
+      <option value="asked_proposal">Minta Proposal</option>
+      <option value="need_revisit">Perlu Kunjung Ulang (waktu)</option>
+      <option value="pic_not_available">PIC Tidak Ada</option>
+      <option value="business_closed">Bisnis Tutup/Pindah</option>
+      <option value="cannot_install">Tidak Bisa Pasang (masalah lokasi)</option>
+      <option value="drop">Drop / Tidak Valid</option>
+    </select>
+  </div>
+  
+  <div class="form-group">
+    <label>Provider yang Dipakai</label>
+    <select id="provider">
+      <option value="">Tidak Tahu</option>
+      <option value="IndiHome">IndiHome</option>
+      <option value="Biznet">Biznet</option>
+      <option value="MyRepublic">MyRepublic</option>
+      <option value="First Media">First Media</option>
+      <option value="MNC">MNC</option>
+      <option value="Moratel">Moratel</option>
+      <option value="None">Tidak Ada (belum pakai internet)</option>
+    </select>
+  </div>
+  
+  <div class="form-group">
+    <label>Nama PIC</label>
+    <input type="text" id="picName" placeholder="Nama kontak person">
+  </div>
+  
+  <div class="form-group">
+    <label>No. HP / WA PIC</label>
+    <input type="text" id="picPhone" placeholder="Contoh: 0812xxxxxxx">
+  </div>
+  
+  <div class="form-group">
+    <label>Keberatan / Pain Point</label>
+    <select id="objection">
+      <option value="">Tidak Ada / Tidak Disebutkan</option>
+      <option value="price">Harga Terlalu Mahal</option>
+      <option value="speed">Speed Kurang</option>
+      <option value="contract">Masih Kontrak</option>
+      <option value="no_need">Tidak Butuh / Sudah Puas</option>
+      <option value="other">Lainnya</option>
+    </select>
+  </div>
+  
+  <div class="form-group">
+    <label>Tindakan Selanjutnya</label>
+    <select id="nextAction">
+      <option value="">Tidak Ada</option>
+      <option value="send_proposal">Kirim Proposal</option>
+      <option value="revisit">Jadwalkan Kunjung Ulang</option>
+      <option value="call">Telepon Follow-up</option>
+      <option value="wa">WhatsApp Follow-up</option>
+      <option value="drop">Drop Lead</option>
+    </select>
+  </div>
+  
+  <div class="form-group">
+    <label>Tanggal Tindakan Selanjutnya</label>
+    <input type="date" id="nextDate">
+  </div>
+  
+  <div class="form-group">
+    <label>Catatan Kunjungan</label>
+    <textarea id="notes" placeholder="Apa yang terjadi, apa yang mereka katakan, kondisi gedung, dll."></textarea>
+  </div>
+  
+  <div class="form-group">
+    <label>Foto</label>
+    <input type="file" id="photo" accept="image/*" capture="environment">
+  </div>
+  
+  <div class="form-group">
+    <label>Lokasi GPS</label>
+    <div class="gps-display" id="gpsDisplay">Mendeteksi lokasi...</div>
+    <input type="hidden" id="gpsLat">
+    <input type="hidden" id="gpsLng">
+  </div>
+  
+  <button class="submit-btn" id="submitBtn" onclick="submitVisit()">Kirim Kunjungan</button>
+</div>
+
+<div id="resultMsg" class="status-msg hidden"></div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const leadId = params.get('lead_id');
+let leadData = null;
+
+async function loadLead() {
+  if (!leadId) {
+    document.getElementById('leadName').textContent = 'ID lead tidak ditemukan';
+    return;
+  }
+  try {
+    const r = await fetch(`/api/leads/${leadId}`);
+    leadData = await r.json();
+    document.getElementById('leadName').textContent = leadData.business_name;
+    if (leadData.current_provider) document.getElementById('provider').value = leadData.current_provider;
+  } catch(e) {
+    document.getElementById('leadName').textContent = 'Gagal memuat data lead';
+  }
+}
+
+// GPS
+function getGPS() {
+  if (!navigator.geolocation) {
+    document.getElementById('gpsDisplay').textContent = 'GPS tidak tersedia';
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      document.getElementById('gpsLat').value = pos.coords.latitude;
+      document.getElementById('gpsLng').value = pos.coords.longitude;
+      document.getElementById('gpsDisplay').textContent = `GPS: ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
+    },
+    err => {
+      document.getElementById('gpsDisplay').textContent = 'GPS: izin ditolak atau tidak tersedia';
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+
+async function submitVisit() {
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Mengirim...';
+  
+  const formData = new FormData();
+  formData.append('lead_id', leadId);
+  formData.append('agent_name', document.getElementById('agentName').value || 'Petugas Lapangan');
+  formData.append('outcome', document.getElementById('outcome').value);
+  formData.append('provider_identified', document.getElementById('provider').value);
+  formData.append('contact_name', document.getElementById('picName').value);
+  formData.append('contact_captured', document.getElementById('picPhone').value);
+  formData.append('pain_noted', document.getElementById('objection').value);
+  formData.append('next_action', document.getElementById('nextAction').value);
+  formData.append('next_action_date', document.getElementById('nextDate').value);
+  formData.append('notes', document.getElementById('notes').value);
+  formData.append('gps_lat', document.getElementById('gpsLat').value);
+  formData.append('gps_lng', document.getElementById('gpsLng').value);
+  
+  const photo = document.getElementById('photo').files[0];
+  if (photo) formData.append('photo', photo);
+  
+  try {
+    const r = await fetch('/api/visits', { method: 'POST', body: formData });
+    if (r.ok) {
+      document.getElementById('visitForm').classList.add('hidden');
+      const msg = document.getElementById('resultMsg');
+      msg.classList.remove('hidden');
+      msg.innerHTML = '<div class="status-success">✅ Kunjungan berhasil tersimpan!</div><br><button onclick="window.close()" class="submit-btn">Tutup</button>';
+    } else {
+      throw new Error('Server error');
+    }
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'Kirim Kunjungan';
+    alert('Error: ' + e.message);
+  }
+}
+
+loadLead();
+getGPS();
+</script>
+</body>
+</html>
