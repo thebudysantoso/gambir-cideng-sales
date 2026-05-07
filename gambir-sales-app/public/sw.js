@@ -1,1 +1,1 @@
-const CACHE_NAME = 'gambir-v11';
+const CACHE_NAME = 'gambir-v12';

@@ -129,18 +129,7 @@
       <button class="btn-close" onclick="closeWAModal()">✕</button>
     </div>
     <div class="modal-body">
-      <label>Template:</label>
-      <select id="waTemplate" onchange="updateWAMessage()">
-        <option value="observer">The Observer - Kontak Pertama (Paling Aman)</option>
-        <option value="insider">The Insider - Promo & Scarcity</option>
-        <option value="problem_solver">The Problem Solver - Fokus Masalah</option>
-        <option value="social_proof">The Social Proof - Referensi Tetangga</option>
-        <option value="minimalist">The Minimalist - Singkat & Brief</option>
-        <option value="fnb">F&B Specific - Resto/Cafe/Warung</option>
-        <option value="kantor">Kantor/Professional - Office</option>
-        <option value="migration">Migration - Sudah Punya Internet</option>
-      </select>
-      <textarea id="waMessage" rows="8"></textarea>
+      <textarea id="waMessage" rows="10" style="width:100%;font-size:14px;padding:12px;border-radius:8px;border:2px solid #E5E7EB;"></textarea>
       <div class="wa-actions">
         <button class="btn-primary" onclick="copyWA()">📋 Salin</button>
         <a id="waLink" class="btn-primary" target="_blank">📱 Buka WA</a>

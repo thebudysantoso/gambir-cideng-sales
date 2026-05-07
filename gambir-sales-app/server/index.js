@@ -558,84 +558,26 @@ app.patch('/api/wa-outreach/:id', (req, res) => {
 app.post('/api/generate-wa', (req, res) => {
   const db = getDb();
   try {
-    const { lead_id, template_type } = req.body;
+    const { lead_id } = req.body;
     const lead = db.prepare('SELECT * FROM leads WHERE lead_id = ? OR id = ?').get(lead_id, lead_id);
     if (!lead) return res.status(404).json({ error: 'Lead not found' });
     
     const contact = lead.phone_primary || lead.phone_all || '';
     const business = lead.business_name;
-    const cluster = lead.cluster || 'area ini';
     const nama = (lead.contact_name || lead.contact_captured || 'Bapak/Ibu').split(' ')[0] || 'Bapak/Ibu';
-    const segment = (lead.segment || '').toLowerCase();
-    const provider = (lead.current_provider || '').toLowerCase();
     
-    // Safe templates — main aman, no overpromise
-    const templates = {
-      observer: {
-        name: 'The Observer',
-        text: `Halo ${nama}. Kami dari Indibiz Telkom Area Jakarta Pusat. Kami sering lewat area ${cluster} dan notice banyak bisnis masih pakai koneksi rumahan untuk operasional. Padahal untuk bisnis, ada layanan khusus dengan dukungan teknis 24 jam dan jaminan lebih stabil. Bisa kami cek apakah ${business} sudah pakai layanan bisnis atau masih layanan rumahan? Gratis, nggak ada kewajiban. 🙏`
-      },
-      insider: {
-        name: 'The Insider',
-        text: `Halo ${nama}. Kami dari Indibiz Telkom Area Jakarta Pusat. Bulan ini ada program pemasangan baru untuk bisnis di area ${cluster} dengan biaya pasang lebih ringan. Paket internet bisnis mulai Rp320rb/bulan, unlimited tanpa batasan. Kalau ${business} tertarik cek ketersediaan, bisa reply WA ini. 🙏`
-      },
-      problem_solver: {
-        name: 'The Problem Solver',
-        text: `Halo ${nama}. Kami dari Indibiz Telkom Area Jakarta Pusat. Untuk bisnis di area ${cluster}, koneksi stabil penting buat kelancaran transaksi harian — terutama yang pakai QRIS atau order online. Indibiz pakai fiber dengan upload-download 1:1, jadi upload juga kencang. Bisa kami bantu cek jaringan di lokasi ${business}? 🙏`
-      },
-      social_proof: {
-        name: 'The Social Proof',
-        text: `Halo ${nama}. Kami dari Indibiz Telkom Area Jakarta Pusat. Beberapa bisnis di sekitar ${cluster} yang kami bantu bulan lalu merasa lebih tenang operasionalnya setelah pakai koneksi khusus bisnis. Kalau ${business} mau lihat perbandingan paket, saya bisa kirim via WA. 🙏`
-      },
-      minimalist: {
-        name: 'The Minimalist',
-        text: `Halo ${nama}. Kami dari Indibiz Telkom Area Jakarta Pusat. Kami punya layanan internet khusus bisnis di area ${cluster}, mulai Rp320rb/bulan unlimited. Mau saya kirimkan detail paketnya? 🙏`
-      },
-      fnb: {
-        name: 'F&B Specific',
-        text: `Halo ${nama}. Kami dari Indibiz Telkom Area Jakarta Pusat. Untuk resto/cafe di area ${cluster}, koneksi stabil itu penting — QRIS, order online, dan komunikasi dengan driver ojek. Indibiz pakai fiber dengan upload-download 1:1, jadi semua lancar. Bisa kami cek jaringan di ${business}? 🙏`
-      },
-      kantor: {
-        name: 'Kantor/Professional',
-        text: `Halo ${nama}. Kami dari Indibiz Telkom Area Jakarta Pusat. Untuk kantor di area ${cluster}, koneksi bisnis dengan SLA lebih cepat dan upload-download 1:1 itu penting — terutama buat video call dan kirim file besar. Bisa kami cek ketersediaan jaringan untuk ${business}? 🙏`
-      },
-      migration: {
-        name: 'Migration',
-        text: `Halo ${nama}. Kami dari Indibiz Telkom Area Jakarta Pusat. Kami lihat ${business} sudah terpasang internet. Kalau ada keluhan lambat atau biaya bulanan naik, Indibiz punya paket khusus bisnis unlimited tanpa FUP dengan upload-download 1:1. Bisa kami bantu bandingkan paket saat ini? 🙏`
-      }
-    };
-    
-    // Auto-select template if not specified
-    let selected = template_type;
-    if (!selected || !templates[selected]) {
-      if (segment.includes('restoran') || segment.includes('cafe') || segment.includes('f&b') || segment.includes('warung') || segment.includes('food')) {
-        selected = 'fnb';
-      } else if (segment.includes('klinik') || segment.includes('apotek') || segment.includes('rumah sakit')) {
-        selected = 'problem_solver'; // klinik pakai problem solver
-      } else if (segment.includes('kantor') || segment.includes('jasa') || segment.includes('consultant')) {
-        selected = 'kantor';
-      } else if (provider.includes('indihome') || provider.includes('biznet') || provider.includes('myrepublic') || provider.includes('first media')) {
-        selected = 'migration';
-      } else if (lead.visit_status === 1) {
-        selected = 'social_proof';
-      } else {
-        selected = 'observer'; // default paling aman
-      }
-    }
-    
-    const template = templates[selected] || templates.observer;
-    const message = template.text;
+    // Template tunggal — kontak pertama Indibiz
+    const message = `Halo ${nama}, izin memperkenalkan layanan dari Indibiz Telkom Jakarta Pusat.\n\nKami punya internet khusus bisnis mulai Rp320rb/bulan unlimited, cocok untuk toko/usaha yang sehari-hari bergantung pada koneksi internet.\n\nKelebihannya, internet bisnis lebih siap untuk kebutuhan operasional seperti WhatsApp order, QRIS, kasir/POS, marketplace, CCTV, dan penggunaan banyak perangkat.\n\nJika saat ini usaha ${nama} masih memakai internet rumahan atau paket data biasa, layanan ini bisa menjadi opsi upgrade yang lebih stabil.\n\nBoleh saya kirimkan detail paketnya?`;
     
     // Save to wa_outreach as draft
     const result = db.prepare(`
       INSERT INTO wa_outreach (lead_id, message_template, message_text, sent_by, status)
       VALUES (?, ?, ?, ?, ?)
-    `).run(lead_id, template.name, message, 'system', 'draft');
+    `).run(lead_id, 'Kontak Pertama', message, 'system', 'draft');
     
     res.json({
       lead_id,
-      template_name: template.name,
-      template_key: selected,
+      template_name: 'Kontak Pertama',
       message,
       contact,
       business,
@@ -651,14 +593,7 @@ app.post('/api/generate-wa', (req, res) => {
 app.get('/api/whatsapp-templates', (req, res) => {
   res.json({
     templates: [
-      { key: 'observer', name: 'The Observer', desc: 'Paling aman, untuk lead baru atau status tidak jelas' },
-      { key: 'insider', name: 'The Insider', desc: 'Promo approach, ada urgency' },
-      { key: 'problem_solver', name: 'The Problem Solver', desc: 'Fokus masalah operasional, untuk F&B/retail' },
-      { key: 'social_proof', name: 'The Social Proof', desc: 'Referensi dari tetangga' },
-      { key: 'minimalist', name: 'The Minimalist', desc: 'Singkat, untuk follow-up' },
-      { key: 'fnb', name: 'F&B Specific', desc: 'Khusus resto/cafe/warung' },
-      { key: 'kantor', name: 'Kantor/Professional', desc: 'Khusus kantor/jasa profesional' },
-      { key: 'migration', name: 'Migration', desc: 'Untuk yang sudah punya internet kompetitor' }
+      { key: 'kontak_pertama', name: 'Kontak Pertama', desc: 'Template tunggal untuk semua lead' }
     ]
   });
 });

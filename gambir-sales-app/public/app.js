@@ -273,12 +273,11 @@ function closeWAModal() { document.getElementById('waModal').classList.add('hidd
 
 async function updateWAMessage() {
   if (!currentLead) return;
-  const templateType = document.getElementById('waTemplate').value;
   try {
     const r = await fetch(`${API}/generate-wa`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lead_id: currentLead.lead_id || currentLead.id, template_type: templateType })
+      body: JSON.stringify({ lead_id: currentLead.lead_id || currentLead.id })
     });
     const data = await r.json();
     if (data.message) {
