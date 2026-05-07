@@ -418,17 +418,28 @@ app.get('/api/leads/:id', (req, res) => {
 app.patch('/api/leads/:id', (req, res) => {
   const db = getDb();
   try {
-    const { pipeline_stage, next_action, sales_signal, current_provider, visit_status } = req.body;
+    const { pipeline_stage, next_action, sales_signal, current_provider, visit_status, segment, cluster, kelurahan, address, phone_primary, email, pain_point, pic_owner, est_mrc, priority_score, internal_notes } = req.body;
     const lead = db.prepare('SELECT * FROM leads WHERE lead_id = ? OR id = ?').get(req.params.id, req.params.id);
     if (!lead) return res.status(404).json({ error: 'Lead not found' });
     
     const updates = [];
     const params = [];
-    if (pipeline_stage) { updates.push('pipeline_stage = ?'); params.push(pipeline_stage); }
-    if (next_action) { updates.push('next_action = ?'); params.push(next_action); }
-    if (sales_signal) { updates.push('sales_signal = ?'); params.push(sales_signal); }
-    if (current_provider) { updates.push('current_provider = ?'); params.push(current_provider); }
+    if (pipeline_stage !== undefined) { updates.push('pipeline_stage = ?'); params.push(pipeline_stage); }
+    if (next_action !== undefined) { updates.push('next_action = ?'); params.push(next_action); }
+    if (sales_signal !== undefined) { updates.push('sales_signal = ?'); params.push(sales_signal); }
+    if (current_provider !== undefined) { updates.push('current_provider = ?'); params.push(current_provider); }
     if (visit_status !== undefined) { updates.push('visit_status = ?'); params.push(visit_status ? 1 : 0); }
+    if (segment !== undefined) { updates.push('segment = ?'); params.push(segment); }
+    if (cluster !== undefined) { updates.push('cluster = ?'); params.push(cluster); }
+    if (kelurahan !== undefined) { updates.push('kelurahan = ?'); params.push(kelurahan); }
+    if (address !== undefined) { updates.push('address = ?'); params.push(address); }
+    if (phone_primary !== undefined) { updates.push('phone_primary = ?'); params.push(phone_primary); }
+    if (email !== undefined) { updates.push('email = ?'); params.push(email); }
+    if (pain_point !== undefined) { updates.push('pain_point = ?'); params.push(pain_point); }
+    if (pic_owner !== undefined) { updates.push('pic_owner = ?'); params.push(pic_owner); }
+    if (est_mrc !== undefined) { updates.push('est_mrc = ?'); params.push(est_mrc); }
+    if (priority_score !== undefined) { updates.push('priority_score = ?'); params.push(priority_score); }
+    if (internal_notes !== undefined) { updates.push('internal_notes = ?'); params.push(internal_notes); }
     updates.push('updated_at = CURRENT_TIMESTAMP');
     params.push(lead.lead_id || lead.id);
     

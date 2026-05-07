@@ -233,21 +233,42 @@ async function openLead(id) {
     document.getElementById('modalTitle').textContent = lead.business_name;
     document.getElementById('modalBody').innerHTML = `
       <div class="detail-grid">
-        <div class="detail-row"><span class="detail-label">Segmen</span><span class="detail-value">${escapeHtml(lead.segment || '-')}</span></div>
-        <div class="detail-row"><span class="detail-label">Cluster</span><span class="detail-value">${escapeHtml(lead.cluster || '-')}</span></div>
-        <div class="detail-row"><span class="detail-label">Kelurahan</span><span class="detail-value">${escapeHtml(lead.kelurahan || '-')}</span></div>
-        <div class="detail-row"><span class="detail-label">Alamat</span><span class="detail-value">${escapeHtml(lead.address || '-')}</span></div>
-        <div class="detail-row"><span class="detail-label">Telepon</span><span class="detail-value">${lead.phone_primary ? `<a href="tel:${lead.phone_primary}">${escapeHtml(lead.phone_primary)}</a>` : '-'}</span></div>
-        <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${lead.email ? `<a href="mailto:${lead.email}">${escapeHtml(lead.email)}</a>` : '-'}</span></div>
-        <div class="detail-row"><span class="detail-label">Provider</span><span class="detail-value">${escapeHtml(lead.current_provider || '-')}</span></div>
-        <div class="detail-row"><span class="detail-label">Pain Point</span><span class="detail-value">${escapeHtml(lead.pain_point || '-')}</span></div>
-        <div class="detail-row"><span class="detail-label">Sinyal Sales</span><span class="detail-value" style="color:${lead.sales_signal==='HOT'?'#ea4335':lead.sales_signal==='WARM'?'#fbbc04':'#5f6368'}">${escapeHtml(lead.sales_signal || '-')}</span></div>
-        <div class="detail-row"><span class="detail-label">Pipeline</span><span class="detail-value">${escapeHtml(lead.pipeline_stage || '-')}</span></div>
-        <div class="detail-row"><span class="detail-label">Tindakan Selanjutnya</span><span class="detail-value">${escapeHtml(lead.next_action || '-')}</span></div>
-        <div class="detail-row"><span class="detail-label">PIC</span><span class="detail-value">${escapeHtml(lead.pic_owner || '-')}</span></div>
-        <div class="detail-row"><span class="detail-label">Estimasi MRC</span><span class="detail-value">${escapeHtml(lead.est_mrc || '-')}</span></div>
-        <div class="detail-row"><span class="detail-label">Skor Prioritas</span><span class="detail-value">${lead.priority_score || 0}</span></div>
-        <div class="detail-row"><span class="detail-label">Catatan Internal</span><span class="detail-value">${escapeHtml(lead.internal_notes || '-')}</span></div>
+        <div class="detail-row"><span class="detail-label">Segmen</span><input class="detail-input" id="edit-segment" value="${escapeHtml(lead.segment || '')}" /></div>
+        <div class="detail-row"><span class="detail-label">Cluster</span><input class="detail-input" id="edit-cluster" value="${escapeHtml(lead.cluster || '')}" /></div>
+        <div class="detail-row"><span class="detail-label">Kelurahan</span><input class="detail-input" id="edit-kelurahan" value="${escapeHtml(lead.kelurahan || '')}" /></div>
+        <div class="detail-row"><span class="detail-label">Alamat</span><input class="detail-input" id="edit-address" value="${escapeHtml(lead.address || '')}" /></div>
+        <div class="detail-row"><span class="detail-label">Telepon</span><input class="detail-input" id="edit-phone" value="${escapeHtml(lead.phone_primary || '')}" /></div>
+        <div class="detail-row"><span class="detail-label">Email</span><input class="detail-input" id="edit-email" value="${escapeHtml(lead.email || '')}" /></div>
+        <div class="detail-row"><span class="detail-label">Provider</span><input class="detail-input" id="edit-provider" value="${escapeHtml(lead.current_provider || '')}" /></div>
+        <div class="detail-row"><span class="detail-label">Pain Point</span><input class="detail-input" id="edit-pain" value="${escapeHtml(lead.pain_point || '')}" /></div>
+        <div class="detail-row"><span class="detail-label">Sinyal Sales</span>
+          <select class="detail-input" id="edit-signal">
+            <option value="HOT" ${lead.sales_signal==='HOT'?'selected':''}>HOT</option>
+            <option value="WARM" ${lead.sales_signal==='WARM'?'selected':''}>WARM</option>
+            <option value="COLD" ${lead.sales_signal==='COLD'?'selected':''}>COLD</option>
+            <option value="UNKNOWN" ${(!lead.sales_signal||lead.sales_signal==='UNKNOWN')?'selected':''}>UNKNOWN</option>
+          </select>
+        </div>
+        <div class="detail-row"><span class="detail-label">Pipeline</span>
+          <select class="detail-input" id="edit-pipeline">
+            <option value="Not Contacted" ${lead.pipeline_stage==='Not Contacted'?'selected':''}>Not Contacted</option>
+            <option value="Contacted" ${lead.pipeline_stage==='Contacted'?'selected':''}>Contacted</option>
+            <option value="Interested" ${lead.pipeline_stage==='Interested'?'selected':''}>Interested</option>
+            <option value="Proposal Sent" ${lead.pipeline_stage==='Proposal Sent'?'selected':''}>Proposal Sent</option>
+            <option value="Negotiation" ${lead.pipeline_stage==='Negotiation'?'selected':''}>Negotiation</option>
+            <option value="Deal" ${lead.pipeline_stage==='Deal'?'selected':''}>Deal</option>
+            <option value="Lost" ${lead.pipeline_stage==='Lost'?'selected':''}>Lost</option>
+            <option value="Drop" ${lead.pipeline_stage==='Drop'?'selected':''}>Drop</option>
+          </select>
+        </div>
+        <div class="detail-row"><span class="detail-label">Tindakan Selanjutnya</span><input class="detail-input" id="edit-next" value="${escapeHtml(lead.next_action || '')}" /></div>
+        <div class="detail-row"><span class="detail-label">PIC</span><input class="detail-input" id="edit-pic" value="${escapeHtml(lead.pic_owner || '')}" /></div>
+        <div class="detail-row"><span class="detail-label">Estimasi MRC</span><input class="detail-input" id="edit-estmrc" value="${escapeHtml(lead.est_mrc || '')}" /></div>
+        <div class="detail-row"><span class="detail-label">Skor Prioritas</span><input class="detail-input" id="edit-score" type="number" value="${lead.priority_score || 0}" /></div>
+        <div class="detail-row"><span class="detail-label">Catatan Internal</span><textarea class="detail-input" id="edit-notes" rows="3">${escapeHtml(lead.internal_notes || '')}</textarea></div>
+      </div>
+      <div style="margin-top:16px;text-align:center;">
+        <button class="btn-primary" onclick="saveLead()" style="background:#D30000;color:#fff;padding:10px 24px;border-radius:8px;border:none;font-weight:700;">💾 Simpan Perubahan</button>
       </div>
     `;
     document.getElementById('leadModal').classList.remove('hidden');
@@ -255,6 +276,44 @@ async function openLead(id) {
 }
 
 function closeModal() { document.getElementById('leadModal').classList.add('hidden'); }
+
+async function saveLead() {
+  if (!currentLead) return;
+  const id = currentLead.lead_id || currentLead.id;
+  const body = {
+    segment: document.getElementById('edit-segment')?.value,
+    cluster: document.getElementById('edit-cluster')?.value,
+    kelurahan: document.getElementById('edit-kelurahan')?.value,
+    address: document.getElementById('edit-address')?.value,
+    phone_primary: document.getElementById('edit-phone')?.value,
+    email: document.getElementById('edit-email')?.value,
+    current_provider: document.getElementById('edit-provider')?.value,
+    pain_point: document.getElementById('edit-pain')?.value,
+    sales_signal: document.getElementById('edit-signal')?.value,
+    pipeline_stage: document.getElementById('edit-pipeline')?.value,
+    next_action: document.getElementById('edit-next')?.value,
+    pic_owner: document.getElementById('edit-pic')?.value,
+    est_mrc: document.getElementById('edit-estmrc')?.value,
+    priority_score: parseInt(document.getElementById('edit-score')?.value || '0'),
+    internal_notes: document.getElementById('edit-notes')?.value
+  };
+  try {
+    const r = await fetch(`${API}/leads/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    if (data.success) {
+      alert('Data tersimpan!');
+      loadStats();
+      loadLeads();
+    } else {
+      alert('Gagal menyimpan: ' + (data.error || 'unknown error'));
+    }
+  } catch(e) { console.error('saveLead error', e); alert('Gagal menyimpan.'); }
+}
+
 function openMaps() {
   if (currentLead?.lat) {
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${currentLead.lat},${currentLead.lng}`, '_blank');
