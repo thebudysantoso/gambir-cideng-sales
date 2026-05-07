@@ -210,13 +210,24 @@ app.get('/api/sheets/stats', async (req, res) => {
     const p = (l.current_provider || '').toLowerCase();
     return p && p !== 'unknown' && p !== '';
   });
+  // Count WA sent from SQLite
+  let waSent = 0;
+  const db2 = getDb();
+  if (db2) {
+    try {
+      const wa = db2.prepare("SELECT COUNT(DISTINCT lead_id) as c FROM wa_outreach WHERE status = 'sent'").get();
+      waSent = wa.c || 0;
+    } catch (e) {}
+    db2.close();
+  }
+
   const stats = {
     total: leads.length,
     totalLeads: leads.length,
     visited: visited.length,
     notVisited: leads.filter(l => l.visit_status !== 1).length,
     waAvailable: withPhone.length,
-    waSent: 0, // Tracked in SQLite
+    waSent: waSent,
     needActions: leads.filter(l => {
       const stage = (l.pipeline_stage || '').toLowerCase();
       return stage.includes('proposal') || stage.includes('follow') || stage.includes('need');
@@ -252,6 +263,20 @@ app.get('/api/sheets/map-data', async (req, res) => {
       lng: l.lng || l.longitude || l.lon
     }));
   res.json({ points: mapPoints, source: sheetsEnabled ? 'sheets' : 'csv' });
+});
+
+// WA sent status (for map purple ring)
+app.get('/api/wa-sent-leads', (req, res) => {
+  const db = getDb();
+  if (!db) return res.json({ sent: [] });
+  try {
+    const rows = db.prepare("SELECT DISTINCT lead_id FROM wa_outreach WHERE status = 'sent'").all();
+    db.close();
+    res.json({ sent: rows.map(r => r.lead_id) });
+  } catch (e) {
+    if (db) db.close();
+    res.json({ sent: [] });
+  }
 });
 
 // ============ CSV ROUTES (Public Google Sheets — No Auth) ============

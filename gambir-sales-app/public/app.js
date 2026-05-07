@@ -48,6 +48,17 @@ async function loadFilters() {
       if (l.lng !== undefined && l.longitude === undefined) l.longitude = l.lng;
     });
 
+    // Mark WA sent leads
+    try {
+      const waR = await fetch(`${API}/wa-sent-leads`);
+      const waData = await waR.json();
+      const sentIds = new Set(waData.sent || []);
+      allLeads.forEach(l => {
+        const id = l.lead_id || l.id;
+        if (sentIds.has(String(id))) l.wa_sent = true;
+      });
+    } catch(e) { console.error('wa-sent-leads error', e); }
+
     const clusters = [...new Set(allLeads.map(l => l.cluster).filter(Boolean))].sort();
     const segments = [...new Set(allLeads.map(l => l.segment).filter(Boolean))].sort();
 
@@ -76,6 +87,17 @@ async function loadLeads() {
         if (l.lat !== undefined && l.latitude === undefined) l.latitude = l.lat;
         if (l.lng !== undefined && l.longitude === undefined) l.longitude = l.lng;
       });
+
+      // Mark WA sent leads
+      try {
+        const waR = await fetch(`${API}/wa-sent-leads`);
+        const waData = await waR.json();
+        const sentIds = new Set(waData.sent || []);
+        all.forEach(l => {
+          const id = l.lead_id || l.id;
+          if (sentIds.has(String(id))) l.wa_sent = true;
+        });
+      } catch(e) { console.error('wa-sent-leads error', e); }
 
       const cluster = document.getElementById('clusterFilter')?.value;
       const segment = document.getElementById('segmentFilter')?.value;
@@ -325,7 +347,7 @@ function addMapLegend() {
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;"><span style="width:10px;height:10px;border-radius:50%;background:#9CA3AF;display:inline-block;"></span> Belum</div>
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;"><span style="width:10px;height:10px;border-radius:50%;background:#2979FF;display:inline-block;"></span> Bisa WA</div>
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;"><span style="width:10px;height:10px;border-radius:50%;background:#00C853;display:inline-block;"></span> Dikunjungi</div>
-        <div style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background:#00C853;border:2px solid #FF1744;display:inline-block;box-sizing:border-box;"></span> Dikunjungi + Perlu Tindakan</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;"><span style="width:10px;height:10px;border-radius:50%;background:#fff;border:3px solid #9C27B0;display:inline-block;box-sizing:border-box;"></span> WA Terkirim (ring)</div>
       </div>
     `;
     return div;
@@ -334,23 +356,32 @@ function addMapLegend() {
 }
 
 function getMapMarkerStyle(l) {
-  // Visited = green, with red border if needs action
-  if (l.visit_status) {
-    const needAction = l.sales_signal === 'HOT' || l.sales_signal === 'WARM' || l.next_action;
+  const hasWA = l.phone_primary?.match(/^(08|628|\+628)/);
+  const isVisited = l.visit_status === 1 || l.visit_status === true;
+  const isWASent = l.wa_sent;
+
+  if (isVisited) {
     return {
       fillColor: '#00C853',
-      color: needAction ? '#FF1744' : '#fff',
-      weight: needAction ? 3 : 2,
-      radius: needAction ? 8 : 6
+      color: isWASent ? '#9C27B0' : '#fff',
+      weight: isWASent ? 4 : 2,
+      radius: 6
     };
   }
-  // Has mobile phone = blue (WA available)
-  const mobile = l.phone_primary?.match(/^(08|628|\+628)/);
-  if (mobile) {
-    return { fillColor: '#2979FF', color: '#fff', weight: 2, radius: 6 };
+  if (hasWA) {
+    return {
+      fillColor: '#2979FF',
+      color: isWASent ? '#9C27B0' : '#fff',
+      weight: isWASent ? 4 : 2,
+      radius: 6
+    };
   }
-  // Default = grey (Belum)
-  return { fillColor: '#9CA3AF', color: '#fff', weight: 2, radius: 6 };
+  return {
+    fillColor: '#9CA3AF',
+    color: isWASent ? '#9C27B0' : '#fff',
+    weight: isWASent ? 4 : 2,
+    radius: 6
+  };
 }
 
 function renderMapMarkers() {
