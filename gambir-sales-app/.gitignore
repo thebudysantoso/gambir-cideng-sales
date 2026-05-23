@@ -1,0 +1,6 @@
+node_modules/
+*.log
+.env
+data/gambir_sales.db
+data/uploads/
+BACKUP_*/
